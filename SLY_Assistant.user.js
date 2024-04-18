@@ -8,7 +8,7 @@
 // @require      https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js
 // @require      https://raw.githubusercontent.com/IoFisho/SLY-5.4/main/anchor-browserified.js
 // @require      https://raw.githubusercontent.com/IoFisho/SLY-5.4/main/buffer-browserified.js
-// @require      https://raw.githubusercontent.com/IoFisho-SLY-5.4/main/bs58-browserified.js
+// @require      https://raw.githubusercontent.com/IoFisho/SLY-5.4/main/bs58-browserified.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=staratlas.com
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -20,16 +20,22 @@
 	'use strict';
 
 	//Used for reading solana data
-	let customReadRPCs = ['https://solana-api.syndica.io/access-token/WPoEqWQ2auQQY1zHRNGJyRBkvfOLqw58FqYucdYtmy8q9Z84MBWwqtfVf8jKhcFh/rpc', //Syndica (Old)
+	let customReadRPCs = 
+		[
+			'https://solana-api.syndica.io/access-token/WPoEqWQ2auQQY1zHRNGJyRBkvfOLqw58FqYucdYtmy8q9Z84MBWwqtfVf8jKhcFh/rpc', //Syndica (Old)
 			'https://rpc.hellomoon.io/57dbc69d-7e66-4454-b33e-fa6a4b46170f', //Hello Moon
-       			'https://staratl-mainc06-2415.mainnet.rpcpool.com', //Triton];
+       			'https://staratl-mainc06-2415.mainnet.rpcpool.com', //Triton]
+		 ];
 
 	//Used for pushing transactions to solana chain
-	let customWriteRPCs = ['https://attentive-snowy-feather.solana-mainnet.quiknode.pro/389843789f82a2d3362fdc8e2d253fad45e71430/', //Quicknode Mio]
-			       'https://rpc.hellomoon.io/57dbc69d-7e66-4454-b33e-fa6a4b46170f', //Hello Moon;
+	let customWriteRPCs = 
+		[
+			'https://attentive-snowy-feather.solana-mainnet.quiknode.pro/389843789f82a2d3362fdc8e2d253fad45e71430/', //Quicknode Mio
+			'https://rpc.hellomoon.io/57dbc69d-7e66-4454-b33e-fa6a4b46170f', //Hello Moon
+		 ];
 
     let saRPCs = [
-        'https://twilight-autumn-diagram.solana-mainnet.quiknode.pro/4fc53d638efd1cc0f80764bc457944bb325d1ff1', //Quicknode
+        	'https://twilight-autumn-diagram.solana-mainnet.quiknode.pro/4fc53d638efd1cc0f80764bc457944bb325d1ff1', //Quicknode
 		'https://rpc.hellomoon.io/57dbc69d-7e66-4454-b33e-fa6a4b46170f', //Hello Moon
         'https://staratl-mainc06-2415.mainnet.rpcpool.com', //Triton
         'https://mainnet.helius-rpc.com/?api-key=735486d8-ae86-4d26-829c-e34a2210d119', //Helius
