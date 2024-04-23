@@ -1,19 +1,18 @@
 // ==UserScript==
 // @name         SLY Assistant
 // @namespace    http://tampermonkey.net/
-// @version      0.5.4
+// @version      0.5.5
 // @description  try to take over the world!
 // @author       SLY w/ Contributions by niofox, SkyLove512, anthonyra
 // @match        https://*.based.staratlas.com/
 // @require      https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js
-// @require      https://raw.githubusercontent.com/IoFisho/SLY-5.4/main/anchor-browserified.js
-// @require      https://raw.githubusercontent.com/IoFisho/SLY-5.4/main/buffer-browserified.js
-// @require      https://raw.githubusercontent.com/IoFisho/SLY-5.4/main/bs58-browserified.js
+// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/anchor-browserified.js
+// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/buffer-browserified.js
+// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/bs58-browserified.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=staratlas.com
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_listValues
-// @grant        unsafeWindow
 // ==/UserScript==
 
 (async function() {
@@ -2775,7 +2774,7 @@
                 console.log('Cost: ', (ammoForDuration * ammoMinSellPrice) + (foodForDuration * foodMinSellPrice) + (subwarpCost * fuelMinSellPrice), 'ATLAS');
                 console.log('Net: ', (userFleet.cargoCapacity * resMinSellPrice) - ((ammoForDuration * ammoMinSellPrice) + (foodForDuration * foodMinSellPrice) + (subwarpCost * fuelMinSellPrice)), 'ATLAS per', miningDuration/60, 'mins');
 
-                unsafeWindow.SLYorderAccounts = orderAccounts;
+                //unsafeWindow.SLYorderAccounts = orderAccounts;
             }
         }
     }
@@ -2952,13 +2951,13 @@
 
 	async function handleScan(i, fleetCoords, destCoords) {
 		let fleetCurrentCargo = await solanaReadConnection.getParsedTokenAccountsByOwner(userFleets[i].cargoHold, {programId: tokenProgramPK});
-		let cargoCnt = fleetCurrentCargo.value.reduce((n, {account}) => n + account.data.parsed.info.tokenAmount.uiAmount, 0);
+		let cargoCnt = fleetCurrentCargo.value.reduce((n, {account}) => n + account.data.parsed.info.tokenAmount.uiAmount * cargoItems.find(r => r.token == account.data.parsed.info.mint).size, 0);
 		let currentFoodAcct = fleetCurrentCargo.value.find(item => item.pubkey.toString() === userFleets[i].foodToken.toString());
 		let currentFoodCnt = currentFoodAcct && currentFoodAcct.account.data.parsed.info.delegatedAmount ? currentFoodAcct.account.data.parsed.info.delegatedAmount.uiAmount : 0;
 
 		if(
 			//Cargo full check for data runner fleets
-			((userFleets[i].scanCost == 0) && (userFleets[i].cargoCapacity - cargoCnt < 100)) ||
+			((userFleets[i].scanCost == 0) && (userFleets[i].cargoCapacity - cargoCnt < userFleets[i].sduPerScan)) ||
 			//Food count check for regular scanning fleets
 			(currentFoodCnt < userFleets[i].scanCost)
 		) {
@@ -3384,7 +3383,7 @@
 				if (fleetCoords[0] == starbaseX && fleetCoords[1] == starbaseY) {
 					await execDock(userFleets[i], userFleets[i].starbaseCoord);
 					cLog(1,`${FleetTimeStamp(userFleets[i].label)} Unloading resource`);
-					updateFleetState(userFleets[i], `Unloading resource`);
+					updateFleetState(userFleets[i], `Unloading`);
 					if (currentResourceCnt > 0) {
 						await execCargoFromFleetToStarbase(userFleets[i], userFleets[i].cargoHold, userFleets[i].mineResource, userFleets[i].starbaseCoord, currentResourceCnt);
 						//await wait(2000);
@@ -3393,7 +3392,7 @@
 					//if (currentFuelCnt < userFleets[i].fuelCapacity) {
 					if (currentFuelCnt < fuelNeeded) {
 						cLog(1,`${FleetTimeStamp(userFleets[i].label)} Loading fuel`);
-						updateFleetState(userFleets[i], `Loading fuel`);
+						updateFleetState(userFleets[i], `Loading`);
 						let fuelCargoTypeAcct = cargoTypes.find(item => item.account.mint.toString() == sageGameAcct.account.mints.fuel);
 						let fuelResp = await execCargoFromStarbaseToFleet(userFleets[i], userFleets[i].fuelTank, fleetFuelAcct, sageGameAcct.account.mints.fuel.toString(), fuelCargoTypeAcct, userFleets[i].starbaseCoord, userFleets[i].fuelCapacity - currentFuelCnt);
 						if (fuelResp && fuelResp.name == 'NotEnoughResource') {
@@ -3405,7 +3404,7 @@
 
 					if (currentAmmoCnt < ammoForDuration) {
 						cLog(1,`${FleetTimeStamp(userFleets[i].label)} Loading ammo`);
-						updateFleetState(userFleets[i], `Loading ammo`);
+						updateFleetState(userFleets[i], `Loading`);
 						let ammoCargoTypeAcct = cargoTypes.find(item => item.account.mint.toString() == sageGameAcct.account.mints.ammo);
 						let ammoResp = await execCargoFromStarbaseToFleet(userFleets[i], userFleets[i].ammoBank, fleetAmmoAcct, sageGameAcct.account.mints.ammo.toString(), ammoCargoTypeAcct, userFleets[i].starbaseCoord, userFleets[i].ammoCapacity - currentAmmoCnt);
 						if (ammoResp && ammoResp.name == 'NotEnoughResource') {
@@ -3421,7 +3420,7 @@
 					foodForDuration = Math.ceil(miningDuration * (userFleets[i].foodConsumptionRate / 10000));
 					if (currentFoodCnt < foodForDuration) {
 						cLog(1,`${FleetTimeStamp(userFleets[i].label)} Loading food`);
-						updateFleetState(userFleets[i], `Loading food`);
+						updateFleetState(userFleets[i], `Loading`);
 						let foodCargoTypeAcct = cargoTypes.find(item => item.account.mint.toString() == sageGameAcct.account.mints.food);
 						let foodResp = await execCargoFromStarbaseToFleet(userFleets[i], userFleets[i].cargoHold, fleetFoodAcct, sageGameAcct.account.mints.food.toString(), foodCargoTypeAcct, userFleets[i].starbaseCoord, foodForDuration - currentFoodCnt);
 						if (foodResp && foodResp.name == 'NotEnoughResource') {
@@ -3431,7 +3430,7 @@
 						//await wait(2000);
 					} else { cLog(1,`${FleetTimeStamp(userFleets[i].label)} Food loading skipped: ${currentFoodCnt} / ${foodForDuration}`); }
 
-					updateFleetState(userFleets[i], `Loading finish`);
+					updateFleetState(userFleets[i], `Loading`);
 
 					if (errorResource.length > 0) {
 						updateFleetState(userFleets[i], `ERROR: Not enough ${errorResource.toString()}`);
@@ -3530,7 +3529,7 @@
 
                 let fuelIndex = targetCargoManifest.findIndex(e => e.res === sageGameAcct.account.mints.fuel.toString());
                 if (fuelIndex > -1) {
-                    targetCargoManifest[fuelIndex] = targetCargoManifest[fuelIndex].amt - refuelResp.amount;
+                    targetCargoManifest[fuelIndex].amt = targetCargoManifest[fuelIndex].amt - refuelResp.amount;
                 }
 
                 //Loading at Starbase
@@ -3566,6 +3565,11 @@
                 if (refuelResp.status === 0) {
                     userFleets[i].state = refuelResp.detail;
                     return;
+                }
+
+                let fuelIndex = starbaseCargoManifest.findIndex(e => e.res === sageGameAcct.account.mints.fuel.toString());
+                if (fuelIndex > -1) {
+                    starbaseCargoManifest[fuelIndex].amt = starbaseCargoManifest[fuelIndex].amt - refuelResp.amount;
                 }
 
                 //Loading at Target
@@ -4010,24 +4014,34 @@
 		if(enableAssistant)	setTimeout(fleetHealthCheck, 10000);
 	}
 
-	async function toggleAssistant() {
-			let autoSpanRef = document.querySelector('#autoScanBtn > span');
-			if (enableAssistant === true) {
-					enableAssistant = false;
-					autoSpanRef.innerHTML = 'Start';
-			} else {
-					enableAssistant = true;
-					await startAssistant();
-					autoSpanRef.innerHTML = 'Stop';
-					for (let i=0, n=userFleets.length; i < n; i++) {
-							let fleetAcctInfo = await getAccountInfo(userFleets[i].label, 'full fleet info', userFleets[i].publicKey);
-							let [fleetState, extra] = getFleetState(fleetAcctInfo);
-							let fleetCoords = fleetState == 'Idle' && extra ? extra : [];
-							userFleets[i].startingCoords = fleetCoords;
-							userFleets[i].state = fleetState;
-					}
-			}
-	}
+    async function toggleAssistant() {
+        let autoSpanRef = document.querySelector('#autoScanBtn > span');
+        if (enableAssistant === true) {
+            let waitForSequence = true;
+            autoSpanRef.innerHTML = 'Wait...';
+            while (waitForSequence) {
+                let fleetBusy = false;
+                for (let i=0, n=userFleets.length; i < n; i++) {
+                    if (['Mine Starting','Mining Stop','Unloading','Loading'].includes(userFleets[i].state)) fleetBusy = true;
+                }
+                if (!fleetBusy) waitForSequence = false;
+                await wait(5000);
+            }
+            enableAssistant = false;
+            autoSpanRef.innerHTML = 'Start';
+        } else {
+            enableAssistant = true;
+            await startAssistant();
+            autoSpanRef.innerHTML = 'Stop';
+            for (let i=0, n=userFleets.length; i < n; i++) {
+                let fleetAcctInfo = await getAccountInfo(userFleets[i].label, 'full fleet info', userFleets[i].publicKey);
+                let [fleetState, extra] = getFleetState(fleetAcctInfo);
+                let fleetCoords = fleetState == 'Idle' && extra ? extra : [];
+                userFleets[i].startingCoords = fleetCoords;
+                userFleets[i].state = fleetState;
+            }
+        }
+    }
 
 	function initUser() {
 		return new Promise(async resolve => {
@@ -4215,6 +4229,7 @@
 					fuelCapacity: fleet.account.stats.cargoStats.fuelCapacity,
 					ammoCapacity: fleet.account.stats.cargoStats.ammoCapacity,
 					scanCost: fleet.account.stats.miscStats.scanCost,
+                    sduPerScan: fleet.account.stats.miscStats.sduPerScan,
 					scanCooldown: fleet.account.stats.miscStats.scanCoolDown,
 					warpCooldown: fleet.account.stats.movementStats.warpCoolDown,
 					miningRate: fleet.account.stats.cargoStats.miningRate,
